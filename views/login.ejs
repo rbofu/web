@@ -1,0 +1,23 @@
+<%- include('partials/header', { title: 'Log in' }) %>
+
+<div class="auth-card">
+  <div class="brand-lg"><div class="mark">P</div><h1>Program Calendar</h1></div>
+  <p class="sub">Sign in with the account your administrator created for you.</p>
+
+  <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+  <form action="/login" method="POST" class="stack">
+    <div class="field">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required autofocus>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+    <button type="submit" class="btn-primary full">Log in</button>
+  </form>
+  <p class="hint">No account? Ask your program administrator to create one for you.</p>
+</div>
+
+<%- include('partials/footer') %>

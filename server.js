@@ -1,56 +1,109 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const config = require('./config');
-const { requireAdmin, requireLogin } = require('./middleware/auth');
-const { checkAndSendReminders } = require('./lib/reminders');
+const bcrypt = require('bcryptjs');
+const db = require('./db');
+
+const authRoutes = require('./routes/auth');
+const activityRoutes = require('./routes/activities');
+const adminRoutes = require('./routes/admin');
+const profileRoutes = require('./routes/profile');
+const fuelRoutes = require('./routes/fuel');
+const { trackActivity } = require('./middleware/auth');
 
 const app = express();
 
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(session({
-  secret: config.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'dev-secret-change-me',
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, maxAge: 1000 * 60 * 60 * 8 } // 8 hours
+  cookie: { maxAge: 1000 * 60 * 60 * 8 } // 8 hours
 }));
 
-// ---- Public REST API (consumed by the public frontend) ----
-app.use('/api', require('./routes/api'));
-
-// ---- Site content-management admin (role: admin only) ----
-app.use('/admin', require('./routes/adminAuth'));
-app.use('/api/admin', require('./routes/adminApi'));
-app.use('/api/admin', require('./routes/upload'));
-app.use('/admin', requireAdmin, express.static(path.join(__dirname, 'public', 'admin')));
-app.get('/admin', requireAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html'));
+// Make the logged-in user available to every view without passing it manually.
+app.use((req, res, next) => {
+  res.locals.currentUser = req.session.user || null;
+  // Ensure 'active' is always defined so header includes that omit it won't error.
+  res.locals.active = '';
+  next();
 });
 
-// ---- Programme Calendar portal (any signed-in account, scoped by unit) ----
-app.use('/calendar', require('./routes/calendarAuth'));
-app.use('/api/calendar', require('./routes/calendarApi'));
-app.use('/api/calendar/fuel', require('./routes/calendarFuelApi'));
-app.use('/api/calendar/admin', require('./routes/calendarAdminApi'));
-app.use('/calendar-images', requireLogin, express.static(path.join(__dirname, 'public', 'calendar-images')));
-app.use('/calendar', requireLogin, express.static(path.join(__dirname, 'public', 'calendar')));
-app.get('/calendar', requireLogin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'calendar', 'index.html'));
+// Keep last_seen_at fresh for the admin panel's online-users indicator.
+app.use(trackActivity);
+
+// Request logger to help debug routing and session issues.
+app.use((req, res, next) => {
+  try {
+    const userDesc = req.session && req.session.user ? `${req.session.user.username}(${req.session.user.id})` : 'anonymous';
+    console.log(`[req] ${req.method} ${req.originalUrl} user=${userDesc}`);
+  } catch (err) {
+    console.log(`[req] ${req.method} ${req.originalUrl} user=<err>`);
+  }
+  next();
 });
 
-// ---- Public frontend (static site) ----
-const frontendDir = path.join(__dirname, '..', 'frontend');
-app.use(express.static(frontendDir));
-app.get('/', (req, res) => res.sendFile(path.join(frontendDir, 'index.html')));
+app.use('/', authRoutes);
+app.use('/', profileRoutes);
+app.use('/', activityRoutes);
+app.use('/', adminRoutes);
+app.use('/', fuelRoutes);
 
-app.listen(config.PORT, () => {
-  console.log(`NTDCP server running at http://localhost:${config.PORT}`);
-  console.log(`Site admin:        http://localhost:${config.PORT}/admin (admin / ChangeMe123!)`);
-  console.log(`Programme calendar: http://localhost:${config.PORT}/calendar (see README for demo logins)`);
+// Temporary debug route - lists registered routes and session info. Remove when done.
+app.get('/__debug/routes', (req, res) => {
+  const routes = [];
+  (app._router && app._router.stack || []).forEach((layer) => {
+    // express mounted routers have .name === 'router' and a .handle.stack
+    if (layer.route && layer.route.path) {
+      routes.push({ path: layer.route.path, methods: Object.keys(layer.route.methods).join(',').toUpperCase() });
+    } else if (layer.name === 'router' && layer.handle && layer.handle.stack) {
+      layer.handle.stack.forEach((l) => {
+        if (l.route && l.route.path) {
+          routes.push({ path: l.route.path, methods: Object.keys(l.route.methods).join(',').toUpperCase() });
+        }
+      });
+    }
+  });
+  res.json({ routes, sessionUser: req.session.user || null });
 });
 
-// Activity reminder emails: check on startup, then every 15 minutes.
-checkAndSendReminders().catch(err => console.error('Reminder check failed:', err.message));
-setInterval(() => {
-  checkAndSendReminders().catch(err => console.error('Reminder check failed:', err.message));
-}, 15 * 60 * 1000);
+app.use((req, res) => {
+  res.status(404).render('error', {
+    title: 'Page not found',
+    message: 'That page does not exist.',
+    user: req.session.user
+  });
+});
+
+const ensureInitialAdmin = () => {
+  const username = (process.env.ADMIN_USERNAME || 'admin').trim();
+  const password = process.env.ADMIN_PASSWORD || 'rama';
+  const fullName = process.env.ADMIN_FULL_NAME || 'Program Administrator';
+
+  const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+  if (existing) {
+    console.log(`Admin user "${username}" already exists.`);
+    return;
+  }
+
+  const hash = bcrypt.hashSync(password, 10);
+  db.prepare(
+    'INSERT INTO users (username, full_name, password_hash, role) VALUES (?, ?, ?, ?)'
+  ).run(username, fullName, hash, 'admin');
+
+  console.log(`Auto-created initial admin user "${username}" with password "${password}"`);
+};
+
+ensureInitialAdmin();
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Program calendar running at http://localhost:${PORT}`);
+});

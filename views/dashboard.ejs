@@ -1,0 +1,107 @@
+<%- include('partials/header', { title: 'Calendar', active: 'dashboard' }) %>
+
+<div class="page-head">
+  <div>
+    <h1>Program Calendar</h1>
+    <p class="sub">Every officer's activities, in one shared view.</p>
+  </div>
+  <button class="btn-primary" id="newActivityBtn">＋ New activity</button>
+</div>
+
+
+<div class="stat-strip" id="calStatStrip"></div>
+
+<div id="conflictBanner" class="conflict-banner" hidden></div>
+
+<div class="layout">
+  <div class="cal-card">
+    <div class="cal-nav">
+      <button class="arrow" id="prevBtn">‹</button>
+      <div class="month-label" id="monthLabel"></div>
+      <button class="arrow" id="nextBtn">›</button>
+      <button class="today-btn" id="todayBtn">Today</button>
+    </div>
+    <div class="dow-row">
+      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="agenda">
+    <h2 id="agendaTitle">This month</h2>
+    <div id="agendaList"></div>
+  </div>
+</div>
+
+<div class="timeline-card">
+  <div class="timeline-head">
+    <h2>Officer Timeline — <span id="timelineMonthLabel"></span></h2>
+    <p class="sub">Every officer's activities this month, at a glance.</p>
+  </div>
+  <div class="timeline-scroll">
+    <table class="timeline-table" id="timelineTable">
+      <thead><tr id="timelineHeadRow"></tr></thead>
+      <tbody id="timelineBody"></tbody>
+    </table>
+  </div>
+  <div class="timeline-legend">
+    <span class="legend-item"><span class="legend-swatch legend-weekend"></span> Weekend</span>
+    <span class="legend-item"><span class="legend-swatch legend-conflict"></span> Double-booked</span>
+    <span class="legend-item">Bar color = officer</span>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="close-x" id="closeX">✕</button>
+    <h3 id="modalTitle">New activity</h3>
+    <div class="err" id="errMsg" hidden></div>
+    <form id="activityForm" class="stack" enctype="multipart/form-data">
+      <div class="field">
+        <label>Activity name</label>
+        <input type="text" id="fName" required>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Start date</label>
+          <input type="date" id="fStart" required>
+        </div>
+        <div class="field">
+          <label>End date</label>
+          <input type="date" id="fEnd" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>Location</label>
+        <input type="text" id="fLocation" placeholder="Where will this take place?">
+      </div>
+      <div class="field">
+        <label>Participants</label>
+        <div class="tag-input" id="tagInput">
+          <input type="text" id="fParticipant" placeholder="Type a name, press Enter">
+        </div>
+      </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <textarea id="fNotes"></textarea>
+      </div>
+      <div class="field">
+        <label>Attach report (optional)</label>
+        <input type="file" id="fAttachments" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.ppt,.pptx">
+        <p class="hint">PDF, PNG, JPEG, DOC/DOCX, PPT/PPTX — up to 10MB each, 5 files max.</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary">Save activity</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  window.currentUser = <%- JSON.stringify(user || null) %>;
+</script>
+<script src="/js/status.js"></script>
+<script src="/js/conflicts.js"></script>
+<script src="/js/dashboard.js"></script>
+<%- include('partials/footer') %>

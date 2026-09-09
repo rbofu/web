@@ -1,0 +1,90 @@
+<%- include('partials/header', { title: 'Profile', active: 'profile' }) %>
+
+<div class="page-head">
+  <div>
+    <h1>My profile</h1>
+    <p class="sub">Update your details and password for this account.</p>
+  </div>
+  <% if (typeof isAdminView !== 'undefined' && isAdminView) { %>
+    <span class="online-pill <%= user.online ? 'is-online' : '' %>">
+      <span class="online-dot"></span><%= user.online ? 'Online now' : 'Offline' %>
+    </span>
+  <% } %>
+</div>
+
+<div class="layout">
+  <div class="agenda">
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <% if (success) { %><div class="alert alert-success"><%= success %></div><% } %>
+
+    <% if (typeof isAdminView !== 'undefined' && isAdminView) { %>
+      <div class="stack">
+        <div class="field"><label>Username</label><div class="readonly"><%= user.username %></div></div>
+        <div class="field"><label>Full name</label><div class="readonly"><%= user.full_name %></div></div>
+        <div class="field"><label>Email</label><div class="readonly"><%= user.email || '—' %></div></div>
+        <div class="field"><label>Mobile number</label><div class="readonly"><%= user.mobile_number || '—' %></div></div>
+        <div class="field"><label>Highest level of education</label><div class="readonly"><%= user.education_level || '—' %></div></div>
+        <div class="field"><label>Unit</label><div class="readonly"><%= user.unit || '—' %></div></div>
+        <div class="field"><label>Role</label><div class="readonly"><%= user.role %></div></div>
+        <div class="field"><label>Privilege</label><div class="readonly"><%= user.privilege %></div></div>
+        <div class="field"><label>Uploads allowed</label><div class="readonly"><%= user.can_upload ? 'Yes' : 'No' %></div></div>
+        <div class="field">
+          <label>Login activity</label>
+          <div class="readonly">
+            <%= user.login_count %> total sign-ins
+            <% if (user.last_login_at) { %> · last on <%= new Date(user.last_login_at).toLocaleString() %><% } %>
+          </div>
+        </div>
+        <p class="hint"><a href="/admin">Back to admin panel</a></p>
+      </div>
+    <% } else { %>
+      <form action="/profile" method="POST" class="stack">
+        <div class="field">
+          <label>Username</label>
+          <input type="text" value="<%= user.username %>" readonly>
+        </div>
+        <div class="field">
+          <label>Full name</label>
+          <input type="text" name="full_name" value="<%= user.full_name %>" required>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" value="<%= user.email || '' %>">
+        </div>
+        <div class="field">
+          <label>Mobile number</label>
+          <input type="text" name="mobile_number" value="<%= user.mobile_number || '' %>">
+        </div>
+        <div class="field">
+          <label>Highest level of education</label>
+          <input type="text" name="education_level" value="<%= user.education_level || '' %>" placeholder="e.g. Bachelor's degree">
+        </div>
+        <div class="field">
+          <label>Unit</label>
+          <select name="unit">
+            <option value="">Select unit</option>
+            <% units.forEach((u) => { %>
+              <option value="<%= u %>" <%= user.unit === u ? 'selected' : '' %>><%= u %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <input type="text" value="<%= user.role %>" readonly>
+        </div>
+        <div class="field">
+          <label>Report visibility privilege</label>
+          <input type="text" value="<%= user.privilege %>" readonly>
+          <p class="hint">Set by an administrator. Controls which units' reports you can see.</p>
+        </div>
+        <div class="field">
+          <label>New password</label>
+          <input type="password" name="password" placeholder="Leave blank to keep current password">
+        </div>
+        <button type="submit" class="btn-primary full">Save profile</button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

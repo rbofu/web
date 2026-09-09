@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: program-calendar-app
+    env: node
+    plan: free
+    branch: main
+    buildCommand: npm install --omit=dev --no-package-lock --no-audit --no-fund
+    startCommand: npm start
+    envVars:
+      - key: SESSION_SECRET
+      - key: ADMIN_USERNAME 
+      - key: ADMIN_PASSWORD
+      - key: ADMIN_FULL_NAME
