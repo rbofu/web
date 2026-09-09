@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — Program Calendar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Work+Sans:wght@400;500;600&display=swap');
+  :root{ --navy:#0a2a3f; --teal:#0e7a72; --line:#e2e7e4; --ink:#14201f; --muted:#7c8b89; --sand:#f6f7f5; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Work Sans',sans-serif;background:var(--sand);color:var(--ink);}
+  h1,h2{font-family:'Lora',serif;color:var(--navy);margin:0;}
+  #calNav{ background:#fff; border-bottom:1px solid var(--line); }
+  .cn-inner{ max-width:1300px; margin:0 auto; padding:0 24px; display:flex; align-items:center; gap:28px; height:60px; }
+  .cn-brand{ display:flex; align-items:center; gap:8px; font-family:'Lora',serif; font-weight:700; color:var(--navy); text-decoration:none; font-size:1.05rem; }
+  .cn-logo{ width:28px; height:28px; border-radius:6px; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Lora',serif; font-size:.95rem; }
+  .cn-tabs{ display:flex; gap:6px; flex:1; }
+  .cn-tabs a{ padding:8px 14px; border-radius:4px; font-size:.9rem; font-weight:600; color:var(--muted); text-decoration:none; }
+  .cn-tabs a:hover{ color:var(--navy); }
+  .cn-tabs a.active{ background:var(--navy); color:#fff; }
+  .cn-who{ display:flex; align-items:center; gap:14px; font-size:.85rem; color:var(--muted); white-space:nowrap; }
+  .cn-who .cn-role{ color:var(--teal); font-weight:600; }
+  .cn-who a{ color:var(--teal); text-decoration:none; }
+
+  main{ max-width:1300px; margin:0 auto; padding:26px 24px 60px; }
+  .page-head{ margin-bottom:20px; }
+  .page-head .sub{ color:var(--muted); font-size:.92rem; }
+  .stat-cards{ display:flex; gap:16px; margin-bottom:20px; }
+  .stat-card{ background:#fff; border:1px solid var(--line); border-radius:6px; padding:16px 22px; }
+  .stat-card .num{ font-family:'Lora',serif; font-size:1.7rem; color:var(--navy); }
+  .stat-card .label{ font-size:.78rem; color:var(--muted); }
+
+  .card{ background:#fff; border:1px solid var(--line); border-radius:6px; padding:22px; margin-bottom:24px; }
+  .card h2{ font-size:1.05rem; margin-bottom:14px; }
+  table{ width:100%; border-collapse:collapse; }
+  th, td{ text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); font-size:.82rem; vertical-align:top; }
+  th{ font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); }
+  .role-badge{ display:inline-block; font-size:.72rem; font-weight:700; padding:2px 9px; border-radius:10px; background:var(--sand); color:var(--navy); }
+  .role-badge.admin{ background:var(--navy); color:#fff; }
+  select, input{ padding:6px 8px; border:1px solid var(--line); border-radius:4px; font-family:inherit; font-size:.82rem; }
+  .toggle{ position:relative; display:inline-block; width:38px; height:20px; }
+  .toggle input{ opacity:0; width:0; height:0; }
+  .toggle .slider{ position:absolute; inset:0; background:#d8dcd9; border-radius:20px; cursor:pointer; transition:.15s; }
+  .toggle .slider::before{ content:""; position:absolute; width:16px; height:16px; left:2px; top:2px; background:#fff; border-radius:50%; transition:.15s; }
+  .toggle input:checked + .slider{ background:var(--teal); }
+  .toggle input:checked + .slider::before{ transform:translateX(18px); }
+  .online-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
+  .online-dot.on{ background:#2f9e64; }
+  .online-dot.off{ background:#c7cfce; }
+  .row-actions a{ font-size:.8rem; font-weight:600; margin-right:8px; cursor:pointer; }
+  .row-actions a.danger{ color:#c0392b; }
+  .row-actions input{ width:120px; margin:4px 0; display:block; }
+  .you-tag{ font-size:.72rem; color:var(--muted); }
+
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .field label{ display:block; font-size:.76rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); margin-bottom:5px; }
+  .field input, .field select{ width:100%; padding:9px 11px; }
+  .full{ grid-column:1/-1; }
+  .btn{ background:var(--navy); color:#fff; border:none; padding:10px 18px; border-radius:4px; font-weight:700; font-size:.88rem; cursor:pointer; margin-top:14px; }
+  .hint{ font-size:.78rem; color:var(--muted); margin-top:8px; }
+
+  .danger-zone{ border:1px solid #f0b8b3; background:#fdf5f4; }
+  .danger-zone h2{ color:#8a3a2e; }
+  .danger-zone a{ color:#c0392b; font-weight:600; cursor:pointer; }
+  .denied{ padding:60px; text-align:center; color:var(--muted); }
+  .modal-bg{ position:fixed; inset:0; background:rgba(10,42,63,.5); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
+  .modal-bg.show{ display:flex; }
+  .modal{ background:#fff; border-radius:6px; padding:26px; width:480px; max-width:100%; }
+  .modal h2{ font-size:1.05rem; margin-bottom:14px; }
+  .modal .field{ margin-bottom:12px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
+</style>
+</head>
+<body>
+<div id="calNav"></div>
+<main id="mainContent">
+  <div class="page-head">
+    <h1>Admin</h1>
+    <div class="sub">Create accounts, manage access, and see who's using the system.</div>
+  </div>
+
+  <div class="stat-cards">
+    <div class="stat-card"><div class="num" id="onlineCount">—</div><div class="label">Online now (last 5 min)</div></div>
+    <div class="stat-card"><div class="num" id="totalCount">—</div><div class="label">Total accounts</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Accounts</h2>
+    <div id="accountsTable"><p>Loading…</p></div>
+  </div>
+
+  <div class="card">
+    <h2>New account</h2>
+    <form id="newAccountForm" class="form-grid">
+      <div class="field"><label>Full name</label><input id="na_name" required></div>
+      <div class="field"><label>Username</label><input id="na_username" required></div>
+      <div class="field"><label>Temporary password</label><input id="na_password" required></div>
+      <div class="field"><label>Email</label><input id="na_email" type="email"></div>
+      <div class="field"><label>Mobile number</label><input id="na_mobile"></div>
+      <div class="field"><label>Highest level of education</label><input id="na_education" placeholder="e.g. Bachelor's degree"></div>
+      <div class="field"><label>Unit</label><select id="na_unit"></select></div>
+      <div class="field"><label>Account role</label>
+        <select id="na_role"><option value="staff">Officer</option><option value="leader">Leader</option><option value="admin">Admin</option></select>
+      </div>
+      <div class="field full"><label>Report visibility privilege</label>
+        <select id="na_privilege">
+          <option value="normal">Normal — own unit only</option>
+          <option value="admin">Administration (all units)</option>
+        </select>
+        <div class="hint">Account role controls Admin panel access. Privilege controls which units' activities and reports this account can see.</div>
+      </div>
+      <div class="full"><button class="btn" type="submit">Create account</button></div>
+    </form>
+  </div>
+
+  <div class="card danger-zone">
+    <h2>Danger zone</h2>
+    <p style="font-size:.88rem;color:var(--muted);">Permanently remove every activity logged in the system, including their attachments. This cannot be undone.</p>
+    <a id="deleteAllBtn">Delete all activities</a>
+  </div>
+</main>
+
+<div class="modal-bg" id="editModalBg">
+  <form class="modal" id="editForm">
+    <h2>Edit account</h2>
+    <div class="field"><label>Full name</label><input id="ea_name"></div>
+    <div class="field"><label>Email</label><input id="ea_email" type="email"></div>
+    <div class="field"><label>Mobile number</label><input id="ea_mobile"></div>
+    <div class="field"><label>Unit</label><select id="ea_unit"></select></div>
+    <div class="field"><label>Account role</label>
+      <select id="ea_role"><option value="staff">Officer</option><option value="leader">Leader</option><option value="admin">Admin</option></select>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn" style="background:#fff;color:var(--navy);border:1px solid var(--line);" id="editCancelBtn">Cancel</button>
+      <button type="submit" class="btn">Save changes</button>
+    </div>
+  </form>
+</div>
+
+<script src="nav.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
