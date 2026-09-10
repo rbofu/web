@@ -1,5 +1,0 @@
-<% if (typeof status !== 'undefined' && status) { %>
-  <span class="status-badge status-<%= status.key %><%= status.blink ? ' status-blink' : '' %>">
-    <% if (status.key === 'ongoing') { %><span class="status-dot"></span><% } %><%= status.label %>
-  </span>
-<% } %>
