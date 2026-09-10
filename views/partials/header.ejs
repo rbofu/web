@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= typeof title !== 'undefined' ? title + ' — Program Calendar' : 'Program Calendar' %></title>
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/features.css">
+</head>
+<body>
+<% if (typeof currentUser !== 'undefined' && currentUser) { %>
+<header class="topbar">
+  <div class="brand">
+    <div class="mark">P</div>
+    <span>Program Calendar</span>
+  </div>
+  <nav class="topnav">
+    <a href="/" class="<%= (typeof active !== 'undefined' && active === 'dashboard') ? 'active' : '' %>">Calendar</a>
+    <a href="/activities" class="<%= (typeof active !== 'undefined' && active === 'activities') ? 'active' : '' %>">Activity Reporting</a>
+    <a href="/fuel" class="<%= (typeof active !== 'undefined' && active === 'fuel') ? 'active' : '' %>">Fuel &amp; Fleet</a>
+    <a href="/profile" class="<%= (typeof active !== 'undefined' && active === 'profile') ? 'active' : '' %>">Profile</a>
+    <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') { %>
+      <a href="/admin" class="<%= (typeof active !== 'undefined' && active === 'admin') ? 'active' : '' %>">Admin</a>
+    <% } %>
+  </nav>
+  <div class="topbar-user">
+    <span><%= currentUser.full_name %> <em>(<%= currentUser.role %>)</em></span>
+    <form action="/logout" method="POST"><button class="link-btn" type="submit">Log out</button></form>
+  </div>
+</header>
+<% } %>
+<main class="wrap">

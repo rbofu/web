@@ -1,0 +1,38 @@
+<%- include('partials/header', { title: 'Activity Reporting', active: 'activities' }) %>
+
+<div class="page-head">
+  <div>
+    <h1>Activity Reporting</h1>
+    <p class="sub">Every activity logged across the program, with double-booking conflicts flagged.</p>
+  </div>
+</div>
+
+<div id="conflictBanner" class="conflict-banner" hidden></div>
+
+<div class="table-card">
+  <table id="activityTable">
+    <thead>
+      <tr>
+        <th>Activity</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Status</th>
+        <th>Location</th>
+        <th>Participants</th>
+        <th>Attachments</th>
+        <th>Logged by</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="activityTableBody"></tbody>
+  </table>
+  <p id="emptyState" class="empty-state" hidden>No activities logged yet.</p>
+</div>
+
+<script>
+  window.currentUser = <%- JSON.stringify(user || null) %>;
+</script>
+<script src="/js/status.js"></script>
+<script src="/js/conflicts.js"></script>
+<script src="/js/activities.js"></script>
+<%- include('partials/footer') %>
